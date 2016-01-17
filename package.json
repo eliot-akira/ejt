@@ -1,0 +1,27 @@
+{
+  "name": "ejt",
+  "version": "0.0.3",
+  "description": "HTML template compiler with include, extend, variables",
+  "homepage": "",
+  "keywords": [
+    "template",
+    "html"
+  ],
+  "author": "",
+  "bin": {
+    "ejt": "./bin/ejt"
+  },
+  "main": "./ejt",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/eliot-akira/ejt.git"
+  },
+  "dependencies": {
+    "marked": "^0.3.5",
+    "optimist": "^0.6.1",
+    "through2": "^2.0.0"
+  },
+  "engines": {
+    "node": ">= 0.4.0"
+  }
+}

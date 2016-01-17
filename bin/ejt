@@ -1,0 +1,112 @@
+#!/usr/bin/env node
+
+var version = '0.5.6';
+var fs = require('fs');
+var path = require('path');
+var optimist = require('optimist');
+var ejt = require('../ejt');
+
+var argv = optimist
+	.usage('EJT template compiler ' + version + '\n\nUsage: ejt source [destination]')
+	.describe('o', 'Open tag')
+	.default('o', '<%')
+	.alias('o', 'open')
+	.describe('c', 'Closing tag')
+	.default('c', '%>')
+	.alias('c', 'close')
+	.describe('out', 'Destination folder')
+	.default('out', '.')
+	.alias('c', 'close')
+	.describe('h', 'Print help (this message) and exit')
+	.alias('h', 'help')
+	.argv;
+
+var options = {
+  open: argv.o,
+  close: argv.c,
+  ext: argv.ext || '.html',
+  src: argv['_'][0] || '',
+  dest: argv.out || argv['_'][1]
+};
+
+options.root = path.dirname(options.src);
+options.file = path.basename(options.src);
+//console.log('Options', options);
+
+var renderer = ejt(options);
+
+var compile = function (content) {
+	try {
+
+		var compiled = renderer.compile(content);
+
+		if (argv['_'][1]) {
+			fs.writeFileSync(argv['_'][1], '(' + compiled.toString() + ');');
+		} else {
+			console.log('(' + compiled.toString() + ');');
+		}
+	} catch (err) {
+		console.error(err.message);
+		process.exit();
+	}
+};
+
+var compileFile = function() {
+  try {
+		file = fs.readFileSync(options.file);
+		content = file.toString();
+	} catch (err) {
+	}
+	writeResult( compile(content) );
+};
+
+var renderFile = function() {
+  var data = {};
+
+  //console.log('render', options.src);
+  renderer.render(options.src, data, function(err, html) {
+    if (err) {
+      throw err;
+    }
+    writeResult( html );
+  });
+};
+
+var writeResult = function( result ) {
+	try {
+		if (options.dest) {
+			fs.writeFileSync(options.dest, result);
+		} else {
+			console.log(result);
+		}
+	} catch (err) {
+		console.error(err.message);
+		process.exit();
+	}
+}
+
+var read = function () {
+	var content = '';
+	var file;
+	var stats;
+
+	try {
+		stats = fs.statSync(options.src);
+	} catch (err) {
+		console.error(err.message);
+		process.exit();
+	}
+	if (stats.isDirectory()) {
+		// Directory
+		// TODO Recursive traversal
+	} else {
+		// File
+    renderFile()
+	}
+};
+
+if (argv.help || !argv['_'].length) {
+	optimist.showHelp();
+} else {
+	read();
+}
