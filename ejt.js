@@ -120,11 +120,16 @@ var EJT = function (options) {
 						buffer += prefix.replace(newlineExp, '\n' + indentation) + text + postfix.replace(newlineExp, '\n' + indentation);
 						break;
 					case 'block' :
-						bufferStack.push('__TemplateContext.blocks[\'' + text.replace(/block\s+('|")([^'"]+)('|").*/, '$2') + '\']');
+            text = text.substring(6); // 'block '
+
+						bufferStack.push('__TemplateContext.blocks[\'' + text + '\']');
+             //text.replace(/block\s+('|")([^'"]+)('|").*/, '$2') + '\']');
 						bufferStackPointer++;
 						prefix = '\'\n';
 						postfix = '\n' + bufferStack[bufferStackPointer] + ' += \'';
-						text = 'if ' + text;
+
+            if (text[0]!=="'") text = "'"+text+"'";
+						text = 'if (block('+text+')) {';
 						buffer += prefix.replace(newlineExp, '\n' + indentation) + text;
 						if (indent) {
 							indentation += '  ';
@@ -139,7 +144,11 @@ var EJT = function (options) {
 						}
 						if (text === 'content') {
 							text = 'content()'
-						}
+						} else {
+              text = text.substring(8); // 'content ' // text.replace(/extend\s+/, '')
+              if (text[0]!=="'") text = "'"+text+"'";
+              text = 'content('+text+')';
+            }
 						buffer += prefix.replace(newlineExp, '\n' + indentation) + text + postfix.replace(newlineExp, '\n' + indentation);
 						break;
 					case 'code' :
@@ -163,7 +172,7 @@ var EJT = function (options) {
 							bufferStack.pop();
 							bufferStackPointer--;
 							prefix = '\'';
-							postfix = '\n' + bufferStack[bufferStackPointer] + ' += \'';
+							postfix = '\n}\n' + bufferStack[bufferStackPointer] + ' += \'';
 							buffer += prefix.replace(newlineExp, '\n' + indentation);
 							indentation = indentation.substr(2);
 							buffer += postfix.replace(newlineExp, '\n' + indentation);
@@ -245,7 +254,9 @@ var EJT = function (options) {
 						buffer += postfix.replace(newlineExp, '\n' + indentation);
 						break;
 					case 'extend' :
-							text = '__Extended = true\n__Parent = ' + text.replace(/extend\s+/, '');
+              text = text.substring(7); // 'extend ' // text.replace(/extend\s+/, '')
+              if (text[0]!=="'") text = "'"+text+"'";
+							text = '__Extended = true\n__Parent = ' + text;
 					default :
 						if (/\n/.test(text)) {
 							lines = text.split(/\n/);
@@ -280,9 +291,7 @@ var EJT = function (options) {
 			}
 			buffer += '\';\nif (! __Extended) {\n  return __Output\n} else { \n  var __Container = __TemplateContext.load(__Parent)\n  __FileInfo.file = __Container.file\n  __FileInfo.line = 1\n  __TemplateContext.childContent = __Output\n  return __Container.compiled.call(this, __TemplateContext, __FileInfo, include, content, block)\n}';
 			buffer = 'var __Extended = false; var __Output;\n' + buffer;
-
-//console.log('BUFFER\n', buffer);
-
+//console.log('BUFFER', buffer);
 			return eval('(function __Template(__TemplateContext, __FileInfo, include, content, block) { with(this) { ' + buffer + ' } });');
 		};
 
