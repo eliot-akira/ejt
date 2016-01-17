@@ -329,68 +329,69 @@ var EJT = function (options) {
 	TemplateContext.prototype.load = function (template) {
 		var file, compiled, container, data, extension;
 
+		var extExp = new RegExp(regExpEscape(ejt.options.ext) + '$');
+		if (Object.prototype.toString.call(ejt.options.root) === '[object String]') {
+			if (typeof process !== 'undefined' && process.platform === 'win32') {
+				file = path.normalize((ejt.options.root.length && template.charAt(0) !== '/' && template.charAt(0) !== '\\' && !/^[a-zA-Z]:/.test(template) ? (ejt.options.root + '/') : '') + template.replace(extExp, ''));
+			} else {
+				file = path.normalize((ejt.options.root.length && template.charAt(0) !== '/' ? (ejt.options.root + '/') : '') + template.replace(extExp, ''));
+			}
+      if (file.indexOf('.') < 0) file += ejt.options.ext;
+
+      // Make it relative
+      ejt.options.root = path.join(
+        ejt.options.root, path.dirname( file ).replace(ejt.options.root, '')
+      );
+		} else {
+			file = template;
+		}
+
+    template = file;
 		if (ejt.options.cache && cache[template]) {
 			return cache[template];
+    }
+
+		data = read(file);
+    extension = '.'+(file.split('.').pop());
+    if ( ejt.options.include && ejt.options.include[extension] ) {
+
+      compiled = function() {
+        return ejt.options.include[extension](data)
+      };
+    } else if (data.substr(0, 24) === '(function __Template(') {
+			try {
+				compiled = eval(data);
+			} catch (e) {
+				e.message = e.message + ' in ' + file;
+				throw e;
+			}
 		} else {
-			var extExp = new RegExp(regExpEscape(ejt.options.ext) + '$');
-			if (Object.prototype.toString.call(ejt.options.root) === '[object String]') {
-				if (typeof process !== 'undefined' && process.platform === 'win32') {
-					file = path.normalize((ejt.options.root.length && template.charAt(0) !== '/' && template.charAt(0) !== '\\' && !/^[a-zA-Z]:/.test(template) ? (ejt.options.root + '/') : '') + template.replace(extExp, ''));
-				} else {
-					file = path.normalize((ejt.options.root.length && template.charAt(0) !== '/' ? (ejt.options.root + '/') : '') + template.replace(extExp, ''));
-				}
-        if (file.indexOf('.') < 0) file += ejt.options.ext;
-
-        // Make it relative
-        ejt.options.root = path.join(
-          ejt.options.root, path.dirname( file ).replace(ejt.options.root, '')
-        );
-			} else {
-				file = template;
+			try {
+				compiled = compile(data);
+			} catch (e) {
+				e.message = e.message.replace(/ on line \d+/, '') + ' in ' + file;
+				throw e;
 			}
-
-			data = read(file);
-      extension = '.'+(file.split('.').pop());
-      if ( ejt.options.include && ejt.options.include[extension] ) {
-
-        compiled = function() {
-          return ejt.options.include[extension](data)
-        };
-      } else if (data.substr(0, 24) === '(function __Template(') {
-				try {
-					compiled = eval(data);
-				} catch (e) {
-					e.message = e.message + ' in ' + file;
-					throw e;
-				}
-			} else {
-				try {
-					compiled = compile(data);
-				} catch (e) {
-					e.message = e.message.replace(/ on line \d+/, '') + ' in ' + file;
-					throw e;
-				}
-			}
-
-			container = { file : file, compiled : compiled, source : '(' + compiled.toString() + ');', lastModified: new Date().toUTCString(), gzip : null };
-			if (ejt.options.cache) {
-				cache[template] = container;
-				if (ejt.options.watch && typeof watchers[file] === 'undefined') {
-					watchers[file] = fs.watch(file, { persistent: false }, function () {
-						watchers[file].close();
-						delete (watchers[file]);
-						delete (cache[template]);
-					});
-				}
-			}
-			return container;
 		}
+
+		container = { file : file, compiled : compiled, source : '(' + compiled.toString() + ');', lastModified: new Date().toUTCString(), gzip : null };
+		if (ejt.options.cache) {
+			cache[template] = container;
+			if (ejt.options.watch && typeof watchers[file] === 'undefined') {
+				watchers[file] = fs.watch(file, { persistent: false }, function () {
+					watchers[file].close();
+					delete (watchers[file]);
+					delete (cache[template]);
+				});
+			}
+		}
+		return container;
 	};
 
 	TemplateContext.prototype.render = function (template, data) {
 		var that = this;
     var _root = ejt.options.root;
-//console.log('root',ejt.options.root,'tmpl',template);
+
 		var container = this.load(template);
 		var fileInfo = { file : container.file, line : 1 };
 
@@ -437,6 +438,7 @@ var EJT = function (options) {
 
     ejt.options.root = path.dirname(template);
     template = path.basename(template);
+//console.log('RENDER', ejt.options.root, template);
 
 		if (typeof arguments[arguments.length - 1] === 'function') {
 			if (arguments.length === 2) {

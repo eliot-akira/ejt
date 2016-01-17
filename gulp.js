@@ -19,6 +19,7 @@ module.exports = function (arg) {
 
   return through.obj(function(file, enc, callback) {
     try {
+
       ejt.render(replaceExtension(file.path, ""), data, function(err, html) {
         if (err) {
           throw err;
