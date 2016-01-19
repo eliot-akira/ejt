@@ -1,5 +1,3 @@
-// Simple server-side HTML templating
-
 var fs = require('fs');
 var path = require('path');
 
@@ -291,7 +289,10 @@ var EJT = function (options) {
 			}
 			buffer += '\';\nif (! __Extended) {\n  return __Output\n} else { \n  var __Container = __TemplateContext.load(__Parent)\n  __FileInfo.file = __Container.file\n  __FileInfo.line = 1\n  __TemplateContext.childContent = __Output\n  return __Container.compiled.call(this, __TemplateContext, __FileInfo, include, content, block)\n}';
 			buffer = 'var __Extended = false; var __Output;\n' + buffer;
-//console.log('BUFFER', buffer);
+
+//if (ejt.currentFile.indexOf('test/index') >= 0)
+//  console.log('BUFFER', buffer);
+
 			return eval('(function __Template(__TemplateContext, __FileInfo, include, content, block) { with(this) { ' + buffer + ' } });');
 		};
 
@@ -346,17 +347,21 @@ var EJT = function (options) {
 			file = template;
 		}
 
-    template = file;
-		if (ejt.options.cache && cache[template]) {
-			return cache[template];
+    ejt.currentFile = file;
+		if (ejt.options.cache && cache[file]) {
+			return cache[file];
     }
 
 		data = read(file);
     extension = '.'+(file.split('.').pop());
     if ( ejt.options.include && ejt.options.include[extension] ) {
-
+      // Middleware for file types
       compiled = function() {
         return ejt.options.include[extension](data)
+      };
+    } else if ( extension === '.json' ) {
+      compiled = function() {
+        return JSON.parse(data);
       };
     } else if (data.substr(0, 24) === '(function __Template(') {
 			try {
@@ -375,13 +380,13 @@ var EJT = function (options) {
 		}
 
 		container = { file : file, compiled : compiled, source : '(' + compiled.toString() + ');', lastModified: new Date().toUTCString(), gzip : null };
-		if (ejt.options.cache) {
-			cache[template] = container;
+		if ( ejt.options.cache) {
+			cache[file] = container;
 			if (ejt.options.watch && typeof watchers[file] === 'undefined') {
 				watchers[file] = fs.watch(file, { persistent: false }, function () {
 					watchers[file].close();
 					delete (watchers[file]);
-					delete (cache[template]);
+					delete (cache[file]);
 				});
 			}
 		}

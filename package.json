@@ -1,7 +1,7 @@
 {
   "name": "ejt",
-  "version": "0.0.6",
-  "description": "HTML template compiler with include, extend, variables",
+  "version": "0.1.0",
+  "description": "Compiler for JavaScript-based HTML templating language",
   "homepage": "",
   "keywords": [
     "template",
