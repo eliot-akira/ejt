@@ -1,6 +1,6 @@
 {
   "name": "ejt",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Compiler for JavaScript-based HTML templating language",
   "homepage": "",
   "keywords": [
