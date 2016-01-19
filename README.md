@@ -51,19 +51,22 @@ Include a JSON file into a variable
 </main>
 ```
 
+Compiled result
+
+```html
+<header>
+  ..Header content..
+</header>
+<main>
+  ..Main content..
+</main>
+```
+
 #### Variables
 
-Unescaped
+Escaped: `<%= foo %>`
 
-```html
-<%- myVar %>
-```
-
-Escaped
-
-```html
-<%= myVar %>
-```
+Unescaped: `<%- bar %>`
 
 #### Code
 
@@ -82,18 +85,16 @@ Optionally add attributes: `<% code class="language-markup" %>`
 You can use JavaScript between open/close tags.
 
 ```js
-<% const pages = include('site.json') %>
+<% var pages = include('site.json') %>
 
 <ul>
-  <% for (let path in pages) { %>
+  <% for (var path in pages) { %>
     <li>
       <a href="/<%- path %>"><%- pages[path] %></a>
     </li>
   <% } %>
 </ul>
 ```
-
-Since the compiler runs on Node.js, [a number of ES6 features](https://nodejs.org/en/docs/es6/) are available.
 
 ## Use
 
