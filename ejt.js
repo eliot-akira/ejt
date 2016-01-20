@@ -52,7 +52,7 @@ var EJT = function (options) {
 		compile = function (template) {
 			var
 				lineNo = 1,
-				bufferStack = [ '__Output' ], bufferStackPointer = 0,
+				bufferStack = [ 'Output' ], bufferStackPointer = 0,
 				buffer = bufferStack[bufferStackPointer] + ' = \'',
 				matches = template.split(new RegExp(regExpEscape(ejt.options.open) + '((?:.|[\r\n])+?)(?:' + regExpEscape(ejt.options.close) + '|$)')),
 				output, text, command, line,
@@ -112,9 +112,11 @@ var EJT = function (options) {
 							prefix = '\' + ((' + line + ')?\'\':\'\') + (';
 							postfix = ') + \'';
 						}
-            text = text.substring(8); // 'include '
-            if (text[0]!=="'") text = "'"+text+"'";
-            text = 'include('+text+')';
+            if (text.length>8 && text[7]===' ') {
+              text = text.substring(8); // 'include '
+              if (text[0]!=="'") text = "'"+text+"'";
+              text = 'include('+text+')';
+            }
 						buffer += prefix.replace(newlineExp, '\n' + indentation) + text + postfix.replace(newlineExp, '\n' + indentation);
 						break;
 					case 'block' :
@@ -127,7 +129,7 @@ var EJT = function (options) {
 						postfix = '\n' + bufferStack[bufferStackPointer] + ' += \'';
 
             if (text[0]!=="'") text = "'"+text+"'";
-						text = 'if (block('+text+')) {';
+						text = 'if (block('+text+'))'; // {
 						buffer += prefix.replace(newlineExp, '\n' + indentation) + text;
 						if (indent) {
 							indentation += '  ';
@@ -143,7 +145,7 @@ var EJT = function (options) {
 						if (text === 'content') {
 							text = 'content()'
 						} else {
-              text = text.substring(8); // 'content ' // text.replace(/extend\s+/, '')
+              text = text.substring(8); // 'content '
               if (text[0]!=="'") text = "'"+text+"'";
               text = 'content('+text+')';
             }
@@ -170,7 +172,7 @@ var EJT = function (options) {
 							bufferStack.pop();
 							bufferStackPointer--;
 							prefix = '\'';
-							postfix = '\n}\n' + bufferStack[bufferStackPointer] + ' += \'';
+							postfix = '\n\n' + bufferStack[bufferStackPointer] + ' += \''; // '\n}\n'
 							buffer += prefix.replace(newlineExp, '\n' + indentation);
 							indentation = indentation.substr(2);
 							buffer += postfix.replace(newlineExp, '\n' + indentation);
@@ -287,13 +289,10 @@ var EJT = function (options) {
 				}
 				lineNo += text.split(newlineExp).length - 1;
 			}
-			buffer += '\';\nif (! __Extended) {\n  return __Output\n} else { \n  var __Container = __TemplateContext.load(__Parent)\n  __FileInfo.file = __Container.file\n  __FileInfo.line = 1\n  __TemplateContext.childContent = __Output\n  return __Container.compiled.call(this, __TemplateContext, __FileInfo, include, content, block)\n}';
-			buffer = 'var __Extended = false; var __Output;\n' + buffer;
 
-//if (ejt.currentFile.indexOf('test/index') >= 0)
-//  console.log('BUFFER', buffer);
+      buffer += '\'';
 
-			return eval('(function __Template(__TemplateContext, __FileInfo, include, content, block) { with(this) { ' + buffer + ' } });');
+			return eval('(function __Template(__TemplateContext, __FileInfo, include, content, block) { \'use strict\'; var __Extended = false, Output, __Parent\n' + buffer + '\nif (! __Extended) {\n  return Output\n} else { \n  var __Container = __TemplateContext.load(__Parent)\n  __FileInfo.file = __Container.file\n  __FileInfo.line = 1\n  __TemplateContext.childContent = Output\n  return __Container.compiled.call(this, __TemplateContext, __FileInfo, include, content, block)\n} })\n');
 		};
 
 	var TemplateContext = function (data) {
@@ -340,9 +339,8 @@ var EJT = function (options) {
       if (file.indexOf('.') < 0) file += ejt.options.ext;
 
       // Make it relative
-      ejt.options.root = path.join(
-        ejt.options.root, path.dirname( file ).replace(ejt.options.root, '')
-      );
+      ejt.options.root = path.dirname( file );
+
 		} else {
 			file = template;
 		}

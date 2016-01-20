@@ -82,18 +82,26 @@ Optionally add attributes: `<% code class="language-markup" %>`
 
 ## Inline JS
 
-You can use JavaScript between open/close tags.
+You can use JavaScript between open/close tags. Since the compiler runs on Node.js, [a number of ES6 features](https://nodejs.org/en/docs/es6/) are available.
 
 ```js
-<% var pages = include('site.json') %>
+<% const pages = include('site.json') %>
 
 <ul>
-  <% for (var path in pages) { %>
+  <% for (let path in pages) { %>
     <li>
       <a href="/<%- path %>"><%- pages[path] %></a>
     </li>
   <% } %>
 </ul>
+```
+
+Note: the first word after the opening tag cannot be any of the reserved commands listed above.
+
+The variable `Output` is a buffer holding the compiled HTML. It can be used to add content.
+
+```js
+['page1', 'page2'].forEach((page) => { Output += include(page) })
 ```
 
 ## Use
