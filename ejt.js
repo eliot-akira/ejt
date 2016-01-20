@@ -63,7 +63,7 @@ var EJT = function (options) {
 				text = matches[i];
 				command = '';
 				if (i % 2 === 1) {
-					line = '__FileInfo.line = ' + lineNo;
+					line = 'FileInfo.line = ' + lineNo;
 					switch (text.charAt(0)) {
 					case '=':
 						prefix = '\' + ((' + line + ')?\'\':\'\') + __TemplateContext.escape(';
@@ -292,7 +292,9 @@ var EJT = function (options) {
 
       buffer += '\'';
 
-			return eval('(function __Template(__TemplateContext, __FileInfo, include, content, block) { \'use strict\'; var __Extended = false, Output, __Parent\n' + buffer + '\nif (! __Extended) {\n  return Output\n} else { \n  var __Container = __TemplateContext.load(__Parent)\n  __FileInfo.file = __Container.file\n  __FileInfo.line = 1\n  __TemplateContext.childContent = Output\n  return __Container.compiled.call(this, __TemplateContext, __FileInfo, include, content, block)\n} })\n');
+      buffer = '(function __Template(__TemplateContext, FileInfo, include, content, block) { \'use strict\'; var __Extended = false, __Parent, Output, Local = __TemplateContext.data\nLocal.file = FileInfo.file\n' + buffer + '\nif (! __Extended) {\n  return Output\n} else { \n  var __Container = __TemplateContext.load(__Parent)\n  FileInfo.file = __Container.file\n  FileInfo.line = 1\n  __TemplateContext.childContent = Output\n  return __Container.compiled.call(this, __TemplateContext, FileInfo, include, content, block)\n} })\n';
+
+			return eval(buffer);
 		};
 
 	var TemplateContext = function (data) {

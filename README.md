@@ -22,8 +22,8 @@ Include and render a Markdown file
 
 Include a JSON file into a variable
 
-```html
-<% var pages = include('site.json') %>
+```js
+<% const pages = include('site.json') %>
 ```
 
 #### Extend
@@ -82,7 +82,9 @@ Optionally add attributes: `<% code class="language-markup" %>`
 
 ## Inline JS
 
-You can use JavaScript between open/close tags. Since the compiler runs on Node.js, [a number of ES6 features](https://nodejs.org/en/docs/es6/) are available.
+You can use JavaScript between open/close tags.
+
+Since the compiler runs on Node.js, [some ES6 features](https://nodejs.org/en/docs/es6/) are supported.
 
 ```js
 <% const pages = include('site.json') %>
@@ -96,13 +98,22 @@ You can use JavaScript between open/close tags. Since the compiler runs on Node.
 </ul>
 ```
 
-Note: the first word after the opening tag cannot be any of the reserved commands listed above.
+Note: the first word after the opening tag cannot be any of the reserved commands: *include*, *extend*, *content* or *block*.
 
-The variable `Output` is a buffer holding the compiled HTML. It can be used to add content.
+#### Output
+
+The variable `Output` is a buffer holding the compiled HTML up to that point. It can be used to add content.
 
 ```js
-['page1', 'page2'].forEach((page) => { Output += include(page) })
+['item1', 'item2'].forEach((product) => {
+  Output += include(`products/${product}`)
+})
 ```
+
+#### Local
+
+The variable `Local` is passed to every template. It has one default property `Local.file`, which is the current template path. `Local` can be used to pass data and functions you want available in other templates.
+
 
 ## Use
 
