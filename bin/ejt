@@ -1,34 +1,34 @@
 #!/usr/bin/env node
 
-var version = '0.5.6';
 var fs = require('fs');
 var path = require('path');
 var optimist = require('optimist');
 var ejt = require('../ejt');
 
 var argv = optimist
-	.usage('EJT template compiler ' + version + '\n\nUsage: ejt source [destination]')
-	.describe('o', 'Open tag')
-	.default('o', '<%')
-	.alias('o', 'open')
-	.describe('c', 'Closing tag')
-	.default('c', '%>')
-	.alias('c', 'close')
-	.describe('out', 'Destination folder')
-	.default('out', '.')
-	.alias('c', 'close')
-	.describe('h', 'Print help (this message) and exit')
+	.usage('EJT template compiler\n\nUsage: ejt source [destination]')
+	.describe('o', 'Output file (default is stdout)')
+	.alias('o', 'out')
+	.describe('e', 'Source file extension')
+	.default('e', 'html')
+	.alias('e', 'ext')
+	.describe('open', 'Open tag')
+	.default('open', '<%')
+	.describe('close', 'Closing tag')
+	.default('close', '%>')
+	.describe('h', 'Show this message')
 	.alias('h', 'help')
 	.argv;
 
 var options = {
-  open: argv.o,
-  close: argv.c,
-  ext: argv.ext || '.html',
-  src: argv['_'][0] || '',
-  dest: argv.out || argv['_'][1]
+  open: argv.open,
+  close: argv.close,
+  ext: argv.ext || 'html',
+  src: argv['_'][0],
+  dest: argv.o || argv['_'][1] || null
 };
 
+options.ext = '.'+options.ext;
 options.root = path.dirname(options.src);
 options.file = path.basename(options.src);
 //console.log('Options', options);
@@ -40,24 +40,22 @@ var compile = function (content) {
 
 		var compiled = renderer.compile(content);
 
-		if (argv['_'][1]) {
-			fs.writeFileSync(argv['_'][1], '(' + compiled.toString() + ');');
-		} else {
-			console.log('(' + compiled.toString() + ');');
-		}
 	} catch (err) {
 		console.error(err.message);
 		process.exit();
 	}
+
+  return compiled;
 };
 
 var compileFile = function() {
   try {
-		file = fs.readFileSync(options.file);
-		content = file.toString();
+		file = fs.readFileSync(options.src);
 	} catch (err) {
+		console.error(err.message);
+		process.exit();
 	}
-	writeResult( compile(content) );
+	writeResult( compile( file.toString() ) );
 };
 
 var renderFile = function() {
@@ -73,10 +71,13 @@ var renderFile = function() {
 };
 
 var writeResult = function( result ) {
+  //console.log('result', result);
 	try {
-		if (options.dest) {
+		if ( options.dest ) {
+      //console.log('write', options.dest)
 			fs.writeFileSync(options.dest, result);
 		} else {
+      // stdout
 			console.log(result);
 		}
 	} catch (err) {
@@ -86,9 +87,8 @@ var writeResult = function( result ) {
 }
 
 var read = function () {
-	var content = '';
-	var file;
 	var stats;
+  //console.log('read', options.src);
 
 	try {
 		stats = fs.statSync(options.src);

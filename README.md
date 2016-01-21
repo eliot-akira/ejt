@@ -1,12 +1,14 @@
 ## EJT
 
-Compiler for JavaScript-based HTML templating language
-
-This is a work in progress.
+This is a server-side compiler for simple JavaScript-based HTML templating.
 
 ## Commands
 
+All commands are placed between opening `<%` and closing `%>` tags.
+
 #### Include
+
+When the first word after the opening tag is *include*, the specified file is included into the compiled output. The path is relative to the template's current folder. The default file extension is `html` and can be omitted.
 
 Include *partial.html* inside another HTML file
 
@@ -14,17 +16,19 @@ Include *partial.html* inside another HTML file
 <% include partial %>
 ```
 
-Include and render a Markdown file
+Markdown files are rendered and included.
 
 ```html
 <% include welcome.md %>
 ```
 
-Include a JSON file into a variable
+JSON files are parsed as an object.
 
 ```js
 <% const pages = include('site.json') %>
 ```
+
+Here's a twist. If the first word is not one of the reserved commands, everything between the tags is evaluated as JavaScript. In that case, `include` is a function that returns the file content.
 
 #### Extend
 
@@ -82,9 +86,7 @@ Optionally add attributes: `<% code class="language-markup" %>`
 
 ## Inline JS
 
-You can use JavaScript between open/close tags.
-
-Since the compiler runs on Node.js, [some ES6 features](https://nodejs.org/en/docs/es6/) are supported.
+The compiler runs on Node.js, so there are [some ES6 features](https://nodejs.org/en/docs/es6/) supported.
 
 ```js
 <% const pages = include('site.json') %>
@@ -97,8 +99,6 @@ Since the compiler runs on Node.js, [some ES6 features](https://nodejs.org/en/do
   <% } %>
 </ul>
 ```
-
-Note: the first word after the opening tag cannot be any of the reserved commands: *include*, *extend*, *content* or *block*.
 
 #### Output
 
@@ -155,9 +155,11 @@ app.use( ejt );
 
 ## Credit
 
-Originally based on [ECT](https://github.com/baryshev/ect), with changes including:
+This is based on a fork of [ECT](https://github.com/baryshev/ect), with on-going refactoring and changes:
 
 - Plain JavaScript
 - Default file extension; relative path; filename without quotes
 - Include markdown, etc. via extensions
-- New commands: code, ...
+- New command: code
+
+I believe the original concept came from [John Resig's micro-templating](http://ejohn.org/blog/javascript-micro-templating/).

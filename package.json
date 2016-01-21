@@ -1,13 +1,14 @@
 {
   "name": "ejt",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Compiler for JavaScript-based HTML templating language",
   "homepage": "",
   "keywords": [
     "template",
-    "html"
+    "html",
+    "javascript"
   ],
-  "author": "",
+  "author": "eliot-akira",
   "bin": {
     "ejt": "./bin/ejt"
   },
@@ -23,5 +24,6 @@
   },
   "engines": {
     "node": ">= 0.4.0"
-  }
+  },
+  "license": "MIT"
 }
